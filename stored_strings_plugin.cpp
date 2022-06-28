@@ -98,10 +98,37 @@ static bool can_escape(tree lhs)
 	return false;
 }
 
+/*
+ * true if the current function is marked with '__init',
+ * a.k.a. __attribute__((__section__(".init.text"))), false otherwise.
+ *
+ * Livepatching cannot touch such functions, so it is not needed to check
+ * them here.
+ */
+static bool func_marked_with_init(void)
+{
+	tree attr_section;
+	const char *args;
+
+	attr_section = lookup_attribute("section",
+					DECL_ATTRIBUTES(current_function_decl));
+	if (attr_section == NULL_TREE)
+		return false;
+
+	args = sorted_attr_string(TREE_VALUE(attr_section));
+	if (!args) /* should not get here, but... */
+		return false;
+
+	return !strcmp(args, ".init.text");
+}
+
 static unsigned int stored_strings_execute(void)
 {
 	basic_block bb;
 	gimple_stmt_iterator gsi;
+
+	if (func_marked_with_init())
+		return 0; /* Nothing to do for __init funcs. */
 
 	FOR_EACH_BB_FN(bb, cfun) {
 		for (gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
