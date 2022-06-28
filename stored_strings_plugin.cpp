@@ -76,13 +76,16 @@ static bool can_escape(tree lhs)
 		return true;
 
 	base = get_base(lhs);
+	if (!base)
+		return false;
+
 	if (VAR_P(base) && is_global_var(base))
 		return true; /* can happen when processing ARRAY_REF */
 
 	/*
 	 * If we get here, base should be a SSA_NAME - check that, just in case.
 	 */
-	if (!base || TREE_CODE(base) != SSA_NAME)
+	if (TREE_CODE(base) != SSA_NAME)
 		return false;
 
 	if (POINTER_TYPE_P(TREE_TYPE(base)) && pointed_data_can_escape(base))
