@@ -25,6 +25,10 @@
 
 #include <stdio.h>
 
+#define __section(section)	__attribute__((__section__(section)))
+#define __init			__section(".init.text")
+#define   noinline		__attribute__((__noinline__))
+
 const char *other_str;
 
 volatile int cond = 1;
@@ -40,6 +44,11 @@ struct outer {
 } data;
 
 struct outer more_data[8];
+
+void __init noinline somefunc(void)
+{
+	other_str = "FooBarBaz";
+}
 
 int main(int argc, char *argv[])
 {
